@@ -1,37 +1,51 @@
-## Welcome to GitHub Pages
+# Записки
 
-You can use the [editor on GitHub](https://github.com/andreibulatov/andreibulatov.github.io/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+Пишу на c#, и для решения большинства задачек использую такие штуки:
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+- [postgres](https://www.postgresql.org)
+- [rabbitmq](https://www.rabbitmq.com)
+- [dotliquid](https://github.com/dotliquid/dotliquid)
+- [ironpython](https://ironpython.net)
 
-### Markdown
+### Немного подробнее [postgres](https://www.postgresql.org)
+Весьма выгодно выглядит для старта проекта, есть всё необходимое, чтоб проект прожил первые полгода и что-то стало понятнее.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Из того, что радует 
+- `jsonb`, `xml` довольно часто стал сохранять исходные сообщения, чтоб при необходимости достать дополнительную информацию
+- `массивы` - являются спорной частью для бд и любителей НФ, у меня в массивах частенько живут дополнительные данные, которые помогают разобраться, в какой момент что-то пошло не по плану
+- `enum` - удобная защита от ввода кривых значений
 
-```markdown
-Syntax highlighted code block
+Из того, что не радует
+- столкнулся с неочевидным ограничением по количеству записей в синтаксисе `with`, переписал на `pl/pgsql` и проблема прошла
+- `pl/pgsql` не очень получилось подружить с [dapper](https://dapper-tutorial.net), проблема была с подстановкой переменных, за 10 минут решение не нашлось, поэтому одну функцию разнес на 2, выполнил в одной транзакции
 
-# Header 1
-## Header 2
-### Header 3
 
-- Bulleted
-- List
+### Немного подробнее [rabbitmq](https://www.rabbitmq.com)
+Очереди, подходят для взаимодействия между сервисам/компонентами, реализации асинхронной схемы запрос/ответ, и событийной модели, это не очень интересно.
 
-1. Numbered
-2. List
+Чуть интереснее - выстраивал на нем pipeline, выглядит неплохо, до момента, когда его нужно менять. 
 
-**Bold** and _Italic_ and `Code` text
+Важные моменты про pipeline
+- для каждого элемента пайплайна
+  - создать очередь входящих сообщений
+  - эксчейндж исходящих сообщений
+  - очередь ошибок
+  - формирование имен - абстракция, желательно в базовом классе
+  - `enum`, который определяет элемент пайплайна
+- сделать биндинги автоматические через `enum` - так проще читать и разбираться что и как идет
+- эксчейндж на исходящие лучше делать `direct` и маршрутизировать через `routing key`
 
-[Link](url) and ![Image](src)
-```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+### Немного подробнее [dotliquid](https://github.com/dotliquid/dotliquid)
+Не открою ничего нового, если скажу, что в шаблонизаторе формирую тексты, подставляя всякие переменные, чаще всего это сообщения клиенту, или, какой-то очень одинаковый формат сообщений для другой системы, в котором меняются только дата отправки, текст, и id сообщения, чтоб не держать иерархию классов для сериализации xml - можно воспользоваться шаблонизатором, смотреться будет понятнее, править приятнее.
 
-### Jekyll Themes
+Из недавнего использования через `dotliquid` генерировал договор в `html`, а через [i7n-pdfhtml](https://github.com/itext/i7n-pdfhtml) конвертировал в `pdf`, править `html` куда приятнее
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/andreibulatov/andreibulatov.github.io/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+### Немного подробнее [ironpython](https://ironpython.net)
+С ним история крутится вокруг того, что питон весьма популярен, и его легко продать, если что-то лень делать самостоятельно, главное, не сильно распространяться на тему того, что это не совсем питон :wink:
 
-### Support or Contact
+Основные идея - динамические сценарии, с контекстом.
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+Прелесть в том, что всякие меняющиеся правила, можно передать на аналитика, захотел поменять логику принятия решений - меняй сам, захотел изменить переменные перед подстановкой в текст - всё в твоих руках, вопрос только в предоставлении контекста.
+
+Был опыт с расширением handlebars, но, это пришлось сделать скорее из-за ограничений внутри команды и работы с ms dynamics crm 
